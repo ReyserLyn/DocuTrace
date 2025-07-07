@@ -1,0 +1,14 @@
+
+build*
+bin/
+out/
+lib/
+
+CMakeSettings.json
+vcpkg-configuration.json
+
+vcpkg_installed
+
+.env
+.env.local
+
