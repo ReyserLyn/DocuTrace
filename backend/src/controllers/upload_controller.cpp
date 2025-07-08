@@ -280,24 +280,31 @@ namespace DocuTrace::Controllers
 
                     std::string original_filename;
 
-                    // Primero intentar obtener el nombre desde Content-Disposition
-                    auto header_it = file_part.headers.find("Content-Disposition");
-                    if (header_it != file_part.headers.end())
+                    // Extraer filename directamente del raw body del request
+                    size_t filename_pos = req.body.find("filename=");
+                    if (filename_pos != std::string::npos)
                     {
-                        const auto& disp_header = header_it->second.value;
-                        size_t filename_pos = disp_header.find("filename=");
-                        if (filename_pos != std::string::npos)
+                        size_t value_start = filename_pos + strlen("filename=");
+
+                        // Verificar si empieza con comilla
+                        if (value_start < req.body.length() && req.body[value_start] == '"')
                         {
-                            std::string temp_filename =
-                                disp_header.substr(filename_pos + strlen("filename="));
-
-                            // Limpiar espacios y comillas
-                            size_t first = temp_filename.find_first_not_of(" \"");
-                            size_t last = temp_filename.find_last_not_of(" \"");
-
-                            if (first != std::string::npos && last != std::string::npos)
+                            // Buscar la comilla de cierre
+                            size_t quote_end = req.body.find('"', value_start + 1);
+                            if (quote_end != std::string::npos)
                             {
-                                original_filename = temp_filename.substr(first, (last - first + 1));
+                                original_filename =
+                                    req.body.substr(value_start + 1, quote_end - value_start - 1);
+                            }
+                        }
+                        else
+                        {
+                            // Sin comillas, buscar hasta el siguiente \r\n o ;
+                            size_t end_pos = req.body.find_first_of("\r\n;", value_start);
+                            if (end_pos != std::string::npos)
+                            {
+                                original_filename =
+                                    req.body.substr(value_start, end_pos - value_start);
                             }
                         }
                     }
