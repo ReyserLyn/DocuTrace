@@ -1,0 +1,33 @@
+BasedOnStyle: Microsoft
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBraces: Allman
+
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: true
+SpacesInParentheses: false
+SpacesInAngles: Never
+SpaceBeforeSquareBrackets: false
+
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: "^<.*>"
+    Priority: 1
+  - Regex: '^".*"$'
+    Priority: 2
+  - Regex: ".*"
+    Priority: 3
+
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+PointerAlignment: Left
+AlignTrailingComments: true
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: All
+Standard: c++17
