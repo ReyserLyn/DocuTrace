@@ -1,144 +1,60 @@
-name: Build Tauri App
+name: "publish"
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-  release:
-    types: [published]
+    branches:
+      - main
+
+# Este workflow se ejecutará en cada push a la rama `release` para crear o actualizar un release de GitHub, compilar la app, y subir los artefactos al release.
 
 jobs:
-  build:
+  publish-tauri:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-22.04, windows-latest]
+        include:
+          - platform: "ubuntu-22.04"
+            args: ""
+          - platform: "windows-latest"
+            args: ""
 
     runs-on: ${{ matrix.platform }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: setup node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: lts/*
 
-      - name: Setup Rust
+      - name: install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' || 'x86_64-unknown-linux-gnu' }}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('apps/tauri/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: |
-          cd apps/tauri
-          pnpm install
-
-      - name: Setup system dependencies (Linux)
-        if: matrix.platform == 'ubuntu-latest'
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev \
-            build-essential \
-            curl \
-            wget \
-            libssl-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            cmake \
-            g++
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Setup system dependencies (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: |
-          # Windows dependencies are handled by the Rust toolchain
+      - name: install frontend dependencies
+        working-directory: ./apps/tauri
+        run: pnpm install
 
-      - name: Setup vcpkg (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg.exe install crow:x64-windows openssl:x64-windows zlib:x64-windows nlohmann-json:x64-windows
-
-      - name: Build backend (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: |
-          cd backend
-          mkdir build
-          cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake
-          cmake --build . --config Release
-          copy bin\Release\docutrace-backend.exe ..\..\apps\tauri\src-tauri\binaries\docutrace-backend-x86_64-pc-windows-msvc.exe
-
-      - name: Build frontend
-        run: |
-          cd apps/tauri
-          pnpm build
-
-      - name: Instalar CLI de Tauri (Rust)
-        run: cargo install tauri-cli --version ^2
-
-      - name: Build Tauri app
-        run: |
-          cd apps/tauri
-          cargo tauri build --release
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: docutrace-${{ matrix.platform }}
-          path: |
-            apps/tauri/src-tauri/target/release/bundle/
-          retention-days: 30
-
-  # Job adicional para crear releases automáticos
-  release:
-    needs: build
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create release assets
-        run: |
-          mkdir -p release-assets
-
-          # Linux assets
-          if [ -d "artifacts/docutrace-ubuntu-latest" ]; then
-            cp -r artifacts/docutrace-ubuntu-latest/* release-assets/
-          fi
-
-          # Windows assets  
-          if [ -d "artifacts/docutrace-windows-latest" ]; then
-            cp -r artifacts/docutrace-windows-latest/* release-assets/
-          fi
-
-      - name: Upload to release
-        uses: actions/upload-release-asset@v1
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./release-assets/
-          asset_name: docutrace-assets
-          asset_content_type: application/zip
+          projectPath: "./apps/tauri"
+          tagName: app-v__VERSION__
+          releaseName: "DocuTrace v__VERSION__"
+          releaseBody: "Ver los assets para descargar esta versión e instalar."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
