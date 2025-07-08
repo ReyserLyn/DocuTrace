@@ -26,6 +26,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 find_package(Crow CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(Threads REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 # ========================
 # Rutas de includes

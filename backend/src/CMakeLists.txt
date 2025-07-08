@@ -20,6 +20,7 @@ target_link_libraries(${PROJECT_NAME}
   ZLIB::ZLIB
   OpenSSL::SSL
   Crow::Crow
+  nlohmann_json::nlohmann_json
 )
 
 # Opciones de compilador por tipo de build
