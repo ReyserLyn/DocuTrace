@@ -36,7 +36,9 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          cd apps/tauri
+          pnpm install
 
       - name: Setup system dependencies
         run: |
