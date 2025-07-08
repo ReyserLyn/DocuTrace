@@ -1,6 +1,7 @@
 #include "services/search_service.hpp"
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 namespace DocuTrace::Services
 {
@@ -42,8 +43,19 @@ namespace DocuTrace::Services
         size_t indexed_count = 0;
         try
         {
-            engine_->IndexDocuments(request.documents);
-            indexed_count = request.documents.size();
+            // Usar el número óptimo de hilos basado en el hardware
+            size_t num_threads = std::thread::hardware_concurrency();
+
+            // Para conjuntos pequeños, usar menos hilos
+            if (request.documents.size() < 1000)
+            {
+                num_threads = std::max(size_t(1), num_threads / 2);
+            }
+
+            // Usar un tamaño de batch apropiado
+            size_t batch_size = std::max(size_t(100), request.documents.size() / (num_threads * 2));
+
+            indexed_count = engine_->IndexDocuments(request.documents, num_threads, batch_size);
         }
         catch (const std::exception& e)
         {
@@ -56,7 +68,8 @@ namespace DocuTrace::Services
     {
         Models::SystemStats stats;
         stats.total_documents = GetDocumentCount();
-        // Los otros campos ya tienen valores por defecto
+        stats.engine_type = "BM25 Concurrent";
+        stats.version = "2.0.0";
         return stats;
     }
 
