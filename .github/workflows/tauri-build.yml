@@ -2,11 +2,11 @@ name: Build Tauri App
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   release:
-    types: [ published ]
+    types: [published]
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -36,15 +36,10 @@ jobs:
         with:
           version: 8
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.STORE_PATH }}
+          path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -115,7 +110,7 @@ jobs:
     needs: build
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -125,12 +120,12 @@ jobs:
       - name: Create release assets
         run: |
           mkdir -p release-assets
-          
+
           # Linux assets
           if [ -d "artifacts/docutrace-ubuntu-latest" ]; then
             cp -r artifacts/docutrace-ubuntu-latest/* release-assets/
           fi
-          
+
           # Windows assets  
           if [ -d "artifacts/docutrace-windows-latest" ]; then
             cp -r artifacts/docutrace-windows-latest/* release-assets/
@@ -144,4 +139,4 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./release-assets/
           asset_name: docutrace-assets
-          asset_content_type: application/zip 
+          asset_content_type: application/zip
