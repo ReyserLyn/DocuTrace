@@ -197,10 +197,7 @@ export function Admin() {
                 onUpload={handleUpload}
                 isUploading={uploadMutation.isPending}
                 uploadSuccess={uploadMutation.isSuccess}
-                uploadError={uploadMutation.error?.message || null}
                 disabled={!backendConnected}
-                accept=".txt,.pdf,.doc,.docx,.md"
-                maxSize={50 * 1024 * 1024}
               />
             </CardContent>
           </Card>
