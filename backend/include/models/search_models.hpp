@@ -38,6 +38,7 @@ namespace DocuTrace::Models
      */
     struct IndexDocumentRequest
     {
+        size_t document_id;
         std::string content;
 
         bool IsValid() const

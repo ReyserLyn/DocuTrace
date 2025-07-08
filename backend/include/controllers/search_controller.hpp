@@ -11,13 +11,6 @@ namespace DocuTrace::Controllers
       private:
         std::shared_ptr<Services::SearchService> search_service_;
 
-        // Métodos auxiliares para manejo de respuestas HTTP
-        crow::response CreateErrorResponse(const std::string& message, int code = 400) const;
-        crow::response CreateSuccessResponse(
-            const std::vector<Models::SearchResult>& results) const;
-        bool ValidateSearchRequest(const crow::json::rvalue& request,
-                                   std::string& error_message) const;
-
       public:
         explicit SearchController(std::shared_ptr<Services::SearchService> service);
         ~SearchController() = default;
@@ -30,13 +23,6 @@ namespace DocuTrace::Controllers
 
         // Registrar todas las rutas en la app de Crow
         void RegisterRoutes(crow::SimpleApp& app);
-
-        // Handlers de endpoints HTTP
-        crow::response HandleSearch(const crow::request& req);
-        crow::response HandleIndexDocument(const crow::request& req);
-        crow::response HandleIndexDocuments(const crow::request& req);
-        crow::response HandleGetStats(const crow::request& req);
-        crow::response HandleClearIndex(const crow::request& req);
     };
 
 } // namespace DocuTrace::Controllers

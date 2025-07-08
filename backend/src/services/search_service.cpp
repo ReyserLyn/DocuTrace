@@ -26,16 +26,13 @@ namespace DocuTrace::Services
 
     bool SearchService::IndexDocument(const Models::IndexDocumentRequest& request)
     {
-        try
+        if (!request.IsValid())
         {
-            engine_->IndexDocument(request.content);
-            return true;
-        }
-        catch (const std::exception& e)
-        {
-            std::cerr << "Error al indexar documento: " << e.what() << std::endl;
             return false;
         }
+
+        engine_->IndexDocument(request.document_id, request.content);
+        return true;
     }
 
     size_t SearchService::IndexDocuments(const Models::IndexDocumentsRequest& request)

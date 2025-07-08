@@ -1,8 +1,10 @@
 #include <ctime>
 #include <iostream>
 #include <memory>
+#include <thread>
 #include "controllers/health_controller.hpp"
 #include "controllers/search_controller.hpp"
+#include "controllers/upload_controller.hpp"
 #include "crow/app.h"
 #include "services/search_service.hpp"
 #include "shared/env_utils.hpp"
@@ -44,6 +46,11 @@ int main()
             std::make_unique<DocuTrace::Controllers::SearchController>(search_service);
         search_controller->RegisterRoutes(app);
 
+        // Crear servicio y controlador de subida
+        auto upload_controller =
+            std::make_unique<DocuTrace::Controllers::UploadController>(search_service);
+        upload_controller->RegisterRoutes(app);
+
         // Ruta adicional de salud para la API
         CROW_ROUTE(app, "/api/health")
             .methods("GET"_method)(
@@ -58,6 +65,7 @@ int main()
                     return crow::response(200, response);
                 });
 
+        /*
         // Cargar datos de prueba si existen
         std::string data_file =
             DocuTrace::Shared::EnvUtils::GetEnv("DATA_FILE", "../../data/docs/sample.txt");
@@ -70,8 +78,9 @@ int main()
         {
             std::cout << "⚠️  No se pudieron cargar datos de prueba desde " << data_file << ": "
                       << e.what() << std::endl;
-            std::cout << "📝 Puedes indexar documentos usando POST /api/documents" << std::endl;
+            std::cout << "📝 Puedes indexar documentos usando POST /api/upload" << std::endl;
         }
+        */
 
         std::cout << "🚀 DocuTrace Search API iniciado en puerto " << PORT << std::endl;
         std::cout << "📍 Health check: http://localhost:" << PORT << "/health" << std::endl;
@@ -79,7 +88,7 @@ int main()
         std::cout << "📊 Stats: http://localhost:" << PORT << "/api/stats" << std::endl;
         std::cout << "🔎 Documentos indexados: " << search_service->GetDocumentCount() << std::endl;
 
-        app.port(PORT).multithreaded().run();
+        app.port(PORT).concurrency(std::thread::hardware_concurrency()).run();
     }
     catch (const std::exception& e)
     {

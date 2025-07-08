@@ -140,15 +140,23 @@ namespace DocuTrace::Infrastructure
         return optimal_threads;
     }
 
-    void BM25Engine::IndexDocument(const std::string& content)
+    void BM25Engine::IndexDocument(size_t document_id, const std::string& content)
     {
         std::vector<std::string> tokens = TokenizeAndNormalize(content);
 
         std::lock_guard<std::mutex> lock(documents_mutex_);
-        int document_id = static_cast<int>(documents_.size());
-        documents_.push_back(content);
-        document_lengths_.AddDocument(document_id, static_cast<int>(tokens.size()));
-        index_.AddTerms(tokens, document_id);
+
+        // Usar document_id (size_t) para el vector, eliminando la advertencia.
+        if (documents_.size() <= document_id)
+        {
+            documents_.resize(document_id + 1);
+        }
+        documents_[document_id] = content;
+
+        // Usar un ID de tipo int para las clases auxiliares que lo requieren.
+        int doc_id_int = static_cast<int>(document_id);
+        document_lengths_.AddDocument(doc_id_int, static_cast<int>(tokens.size()));
+        index_.AddTerms(tokens, doc_id_int);
     }
 
     void BM25Engine::IndexDocumentBatch(const std::vector<std::string>& batch, size_t start_id)
@@ -242,54 +250,41 @@ namespace DocuTrace::Infrastructure
             return {};
         }
 
-        std::map<int, double> document_scores;
-        const double total_documents = static_cast<double>(documents_.size());
-        const double avg_doc_length = document_lengths_.GetAverageLength();
+        std::vector<double> scores(documents_.size(), 0.0);
+        double N = static_cast<double>(documents_.size());
+        double avdl = document_lengths_.GetAverageLength();
 
-        // Calcular score para cada término de la query
-        for (const std::string& token : query_tokens)
+        for (const auto& token : query_tokens)
         {
-            std::set<int> matching_docs = index_.GetDocuments(token);
-            const int docs_with_term = index_.GetIndexFrequency(token);
+            double n = static_cast<double>(index_.GetIndexFrequency(token));
+            if (n == 0)
+                continue;
 
-            for (int doc_id : matching_docs)
+            // Iterar sobre los documentos que contienen el token
+            for (int doc_id : index_.GetDocuments(token))
             {
-                const int term_freq = index_.GetDocumentFrequency(token, doc_id);
-                const int doc_length = document_lengths_.GetLength(doc_id);
-
-                double score = CalculateBM25Score(static_cast<double>(docs_with_term),
-                                                  static_cast<double>(term_freq), total_documents,
-                                                  static_cast<double>(doc_length), avg_doc_length);
-
-                document_scores[doc_id] += score;
+                double f = static_cast<double>(index_.GetDocumentFrequency(token, doc_id));
+                double dl = static_cast<double>(document_lengths_.GetLength(doc_id));
+                scores[doc_id] += CalculateBM25Score(n, f, N, dl, avdl);
             }
         }
 
-        // Convertir a vector y ordenar por score
-        std::vector<std::pair<double, int>> score_pairs;
-        score_pairs.reserve(document_scores.size());
-
-        for (const auto& [doc_id, score] : document_scores)
-        {
-            if (score > 0.0)
-            {
-                score_pairs.emplace_back(score, doc_id);
-            }
-        }
-
-        // Ordenar por score descendente
-        std::sort(score_pairs.begin(), score_pairs.end(),
-                  [](const auto& a, const auto& b) { return a.first > b.first; });
-
-        // Crear resultados finales
+        // Crear resultados y ordenarlos
         std::vector<SearchResult> results;
-        results.reserve(std::min(max_results, score_pairs.size()));
-
-        for (size_t i = 0; i < std::min(max_results, score_pairs.size()); ++i)
+        for (size_t i = 0; i < scores.size(); ++i)
         {
-            const auto& [score, doc_id] = score_pairs[i];
-            results.emplace_back(documents_[doc_id], score, doc_id);
+            if (scores[i] > 0)
+            {
+                // Asegurarse de no acceder a un documento vacío si fue redimensionado
+                if (i < documents_.size() && !documents_[i].empty())
+                {
+                    results.emplace_back(documents_[i], scores[i], static_cast<int>(i));
+                }
+            }
         }
+
+        std::sort(results.begin(), results.end(),
+                  [](const SearchResult& a, const SearchResult& b) { return a.score > b.score; });
 
         return results;
     }

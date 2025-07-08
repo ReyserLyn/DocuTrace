@@ -104,7 +104,7 @@ namespace DocuTrace::Infrastructure
          * @brief Indexa un documento de forma segura para concurrencia
          * @param content Contenido del documento a indexar
          */
-        void IndexDocument(const std::string& content);
+        void IndexDocument(size_t document_id, const std::string& content);
 
         /**
          * @brief Indexa múltiples documentos de forma concurrente
