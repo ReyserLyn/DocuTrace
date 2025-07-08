@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-namespace Utils
+namespace Env
 {
     std::string GetEnv(std::string_view varName, std::string_view defaultValue)
     {
@@ -53,4 +53,4 @@ namespace Utils
             setenv(name.c_str(), value.c_str(), 1);
         }
     }
-} // namespace Utils
+} // namespace Env

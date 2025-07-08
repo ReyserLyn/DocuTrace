@@ -3,8 +3,8 @@
 #include <string>
 #include <string_view>
 
-namespace Utils
+namespace Env
 {
     std::string GetEnv(std::string_view varName, std::string_view defaultValue);
     void LoadEnvFile(const std::string& filename = ".env");
-} // namespace Utils
+} // namespace Env

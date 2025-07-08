@@ -4,9 +4,9 @@
 
 int main()
 {
-    Utils::LoadEnvFile();
+    Env::LoadEnvFile();
 
-    const auto PORT = std::stoi(Utils::GetEnv("PORT", "8000"));
+    const auto PORT = std::stoi(Env::GetEnv("PORT", "8000"));
 
     crow::SimpleApp app;
 
