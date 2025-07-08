@@ -92,6 +92,9 @@ jobs:
           cd apps/tauri
           pnpm build
 
+      - name: Instalar CLI de Tauri (Rust)
+        run: cargo install tauri-cli --version ^2
+
       - name: Build Tauri app
         run: |
           cd apps/tauri
