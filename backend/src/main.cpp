@@ -1,4 +1,5 @@
 #include "crow/app.h"
+#include "routes/health.hpp"
 #include "utils/env.utils.hpp"
 
 int main()
@@ -9,8 +10,7 @@ int main()
 
     crow::SimpleApp app;
 
-    CROW_ROUTE(app, "/")
-    ([] { return "Hello world!"; });
+    HealthAPI::RegisterRoutes(app);
 
     app.port(PORT).multithreaded().run();
 
