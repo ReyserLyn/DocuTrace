@@ -10,16 +10,16 @@ import {
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useSearchMutation, useBackendStatus } from "@/hooks/useBackend";
 import { SearchResult } from "@/interfaces";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,8 +77,9 @@ export function Home() {
               <span className="text-primary">Busca</span> en tus documentos
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Motor de búsqueda inteligente con tecnología BM25 para encontrar
-              exactamente lo que necesitas en tu biblioteca de documentos
+              Motor de búsqueda inteligente basado en <b>índice invertido</b> y{" "}
+              <b>BM25</b>, como los grandes buscadores, para encontrar
+              exactamente lo que necesitas en tu biblioteca de documentos.
             </p>
           </div>
 
@@ -164,7 +165,9 @@ export function Home() {
       </div>
 
       {/* Resultados de búsqueda */}
-      {(searchResults.length > 0 || searchMutation.isError) && (
+      {(searchResults.length > 0 ||
+        searchMutation.isError ||
+        (searchQuery && !isSearching)) && (
         <div className="border-t bg-muted/30">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
@@ -185,7 +188,25 @@ export function Home() {
                 </Card>
               )}
 
-              {/* Resultados */}
+              {/* Sin resultados */}
+              {searchQuery &&
+                !isSearching &&
+                searchResults.length === 0 &&
+                !searchMutation.isError && (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <Search className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">
+                      No se encontraron resultados
+                    </h3>
+                    <p className="text-muted-foreground mb-4 text-center max-w-md">
+                      Intenta con otras palabras clave o revisa la ortografía.
+                      Recuerda que el motor utiliza un índice invertido y BM25
+                      para encontrar coincidencias relevantes.
+                    </p>
+                  </div>
+                )}
+
+              {/* Resultados tipo Google */}
               {searchResults.length > 0 && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -197,39 +218,59 @@ export function Home() {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {searchResults.map((result: SearchResult) => (
-                      <Card
+                      <div
                         key={result.document_id}
-                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        className="group border-b last:border-b-0 border-muted py-6 px-2 hover:bg-muted/50 transition cursor-pointer rounded-lg"
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-5 w-5 text-muted-foreground" />
-                              <span className="font-medium text-muted-foreground">
-                                Documento #{result.document_id}
-                              </span>
-                            </div>
-                            <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                              {(result.score * 100).toFixed(1)}% relevancia
-                            </div>
-                          </div>
-
-                          <p className="text-foreground leading-relaxed mb-4">
-                            {result.content_preview}
-                          </p>
-
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              Ver completo
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              Copiar contenido
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                            Documento #{result.document_id}
+                          </span>
+                          {/* Aquí se puede agregar un badge de tipo de archivo en el futuro */}
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            {(result.score * 100).toFixed(1)}% relevancia
+                          </span>
+                        </div>
+                        <div className="mb-2">
+                          <span className="text-lg font-semibold text-blue-800 group-hover:underline">
+                            {/* Aquí se puede mostrar un título si el backend lo provee */}
+                            Documento #{result.document_id}
+                          </span>
+                        </div>
+                        <p className="text-foreground leading-relaxed mb-3 text-base">
+                          {result.content_preview}
+                        </p>
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                Ver completo
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogTitle>{`Documento #${result.document_id}`}</DialogTitle>
+                              <div className="max-h-[60vh] overflow-y-auto whitespace-pre-line text-base mt-4">
+                                {result.content_preview}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                result.content_preview
+                              );
+                            }}
+                          >
+                            Copiar contenido
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
