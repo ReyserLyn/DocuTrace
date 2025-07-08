@@ -24,7 +24,6 @@ export function Settings() {
   const baseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
   const [backendUrl, setBackendUrl] = useState(baseUrl);
   const [searchLimit, setSearchLimit] = useState(10);
-  const [autoConnect, setAutoConnect] = useState(true);
 
   // TanStack Query hooks
   const { data: backendConnected } = useBackendStatus();
@@ -101,24 +100,6 @@ export function Settings() {
                     <span className="text-sm">Error de conexión</span>
                   </div>
                 )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">
-                    Conexión automática
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Conectar al iniciar la app
-                  </p>
-                </div>
-                <Button
-                  variant={autoConnect ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setAutoConnect(!autoConnect)}
-                >
-                  {autoConnect ? "Activado" : "Desactivado"}
-                </Button>
               </div>
 
               {/* Estado actual del backend */}

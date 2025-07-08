@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
-export type ViewType = 'home' | 'settings';
+export type ViewType = "home" | "settings" | "admin";
 
 interface ViewState {
   currentView: ViewType;
@@ -14,23 +14,23 @@ interface ViewState {
 export const useViewStore = create<ViewState>()(
   devtools(
     (set, get) => ({
-      currentView: 'home',
+      currentView: "home",
       previousView: null,
 
       setView: (view: ViewType) => {
         const current = get().currentView;
-        set({ 
-          currentView: view, 
-          previousView: current !== view ? current : get().previousView 
+        set({
+          currentView: view,
+          previousView: current !== view ? current : get().previousView,
         });
       },
 
       goBack: () => {
         const { previousView } = get();
         if (previousView) {
-          set({ 
-            currentView: previousView, 
-            previousView: null 
+          set({
+            currentView: previousView,
+            previousView: null,
           });
         }
       },
@@ -40,7 +40,7 @@ export const useViewStore = create<ViewState>()(
       },
     }),
     {
-      name: 'view-store',
+      name: "view-store",
     }
   )
-); 
+);

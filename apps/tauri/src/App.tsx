@@ -2,12 +2,14 @@ import {
   FileText,
   Home as HomeIcon,
   Settings as SettingsIcon,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useViewStore } from "@/store/useViewStore";
 import { Home } from "@/views/Home";
 import { Settings } from "@/views/Settings";
+import { Admin } from "@/views/Admin";
 
 function App() {
   const { currentView, setView } = useViewStore();
@@ -18,6 +20,8 @@ function App() {
         return <Home />;
       case "settings":
         return <Settings />;
+      case "admin":
+        return <Admin />;
       default:
         return <Home />;
     }
@@ -63,6 +67,19 @@ function App() {
                 >
                   <SettingsIcon className="h-4 w-4" />
                   Configuración
+                </Button>
+                <Button
+                  variant={currentView === "admin" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setView("admin")}
+                  className={cn(
+                    "gap-2",
+                    currentView === "admin" &&
+                      "bg-primary text-primary-foreground"
+                  )}
+                >
+                  <Shield className="h-4 w-4" />
+                  Administrar
                 </Button>
               </nav>
             </div>
