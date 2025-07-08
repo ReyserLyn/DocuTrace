@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, windows-latest]
+        platform: [ubuntu-22.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -69,15 +69,12 @@ jobs:
         run: |
           # Windows dependencies are handled by the Rust toolchain
 
-      - name: Build backend (Linux)
-        if: matrix.platform == 'ubuntu-latest'
+      - name: Setup vcpkg (Windows)
+        if: matrix.platform == 'windows-latest'
         run: |
-          cd backend
-          mkdir -p build
-          cd build
-          cmake ..
-          make -j$(nproc)
-          cp bin/docutrace-backend ../../apps/tauri/src-tauri/binaries/docutrace-backend-x86_64-unknown-linux-gnu
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg.exe install crow:x64-windows openssl:x64-windows zlib:x64-windows nlohmann-json:x64-windows
 
       - name: Build backend (Windows)
         if: matrix.platform == 'windows-latest'
@@ -85,7 +82,7 @@ jobs:
           cd backend
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake
           cmake --build . --config Release
           copy bin\Release\docutrace-backend.exe ..\..\apps\tauri\src-tauri\binaries\docutrace-backend-x86_64-pc-windows-msvc.exe
 

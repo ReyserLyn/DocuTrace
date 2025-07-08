@@ -7,8 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - name: Checkout
@@ -40,7 +45,8 @@ jobs:
           cd apps/tauri
           pnpm install
 
-      - name: Setup system dependencies
+      - name: Setup system dependencies (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev \
@@ -54,7 +60,15 @@ jobs:
             cmake \
             g++
 
-      - name: Build backend
+      - name: Setup vcpkg (Windows)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg.exe install crow:x64-windows openssl:x64-windows zlib:x64-windows nlohmann-json:x64-windows
+
+      - name: Build backend (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           cd backend
           mkdir -p build
@@ -62,6 +76,16 @@ jobs:
           cmake ..
           make -j$(nproc)
           cp bin/docutrace-backend ../../apps/tauri/src-tauri/binaries/docutrace-backend-x86_64-unknown-linux-gnu
+
+      - name: Build backend (Windows)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          cd backend
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake
+          cmake --build . --config Release
+          copy bin\Release\docutrace-backend.exe ..\..\apps\tauri\src-tauri\binaries\docutrace-backend-x86_64-pc-windows-msvc.exe
 
       - name: Build frontend
         run: |
@@ -73,9 +97,18 @@ jobs:
           cd apps/tauri
           cargo tauri build
 
-      - name: Upload Linux artifact
+      - name: Upload artifact (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
           name: docutrace-linux-dev
+          path: apps/tauri/src-tauri/target/debug/bundle/
+          retention-days: 7
+
+      - name: Upload artifact (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docutrace-windows-dev
           path: apps/tauri/src-tauri/target/debug/bundle/
           retention-days: 7
