@@ -258,14 +258,18 @@ namespace DocuTrace::Infrastructure
         {
             double n = static_cast<double>(index_.GetIndexFrequency(token));
             if (n == 0)
+            {
                 continue;
+            }
 
-            // Iterar sobre los documentos que contienen el token
-            for (int doc_id : index_.GetDocuments(token))
+            auto docs_with_token = index_.GetDocuments(token);
+
+            for (int doc_id : docs_with_token)
             {
                 double f = static_cast<double>(index_.GetDocumentFrequency(token, doc_id));
                 double dl = static_cast<double>(document_lengths_.GetLength(doc_id));
-                scores[doc_id] += CalculateBM25Score(n, f, N, dl, avdl);
+                double score = CalculateBM25Score(n, f, N, dl, avdl);
+                scores[doc_id] += score;
             }
         }
 
@@ -273,9 +277,8 @@ namespace DocuTrace::Infrastructure
         std::vector<SearchResult> results;
         for (size_t i = 0; i < scores.size(); ++i)
         {
-            if (scores[i] > 0)
+            if (scores[i] != 0.0)
             {
-                // Asegurarse de no acceder a un documento vacío si fue redimensionado
                 if (i < documents_.size() && !documents_[i].empty())
                 {
                     results.emplace_back(documents_[i], scores[i], static_cast<int>(i));
