@@ -13,7 +13,7 @@ namespace DocuTrace::Shared
         std::ifstream file(filepath);
         if (!file.is_open())
         {
-            std::cout << "⚠️  No se encontró archivo .env en " << filepath << std::endl;
+            std::cout << "[-] No se encontró archivo .env en " << filepath << std::endl;
             return;
         }
 

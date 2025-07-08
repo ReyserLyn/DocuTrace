@@ -16,8 +16,6 @@ namespace
     const std::filesystem::path LAST_ID_FILE = DATA_ROOT / "last_id.txt";
     const std::filesystem::path DOC_INDEX_FILE = DATA_ROOT / "document_index.json";
 
-    // Obtiene el siguiente ID único y actualiza el contador.
-    // NOTA: Esta implementación no es segura para concurrencia.
     int get_next_id()
     {
         std::filesystem::create_directories(DATA_ROOT);
@@ -136,9 +134,6 @@ namespace DocuTrace::Controllers
                         return crow::response(400,
                                               "{\"error\": \"El cuerpo del request está vacío.\"}");
                     }
-
-                    // Crow no parece necesitar el parseo de 'message' si solo hay un cuerpo binario
-                    // Asumimos que todo el cuerpo es el archivo.
 
                     // --- Lógica de persistencia e indexación ---
 

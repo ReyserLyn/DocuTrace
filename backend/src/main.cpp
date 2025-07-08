@@ -1,4 +1,3 @@
-#include <ctime>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -11,7 +10,7 @@
 
 void setupCORS(crow::SimpleApp& app)
 {
-    // Configurar CORS para todas las rutas
+    // Configurar CORS para todas las rutas (TODO: Configurar CORS para rutas específicas)
     CROW_ROUTE(app, "/").methods("OPTIONS"_method)(
         [](const crow::request& req)
         {
@@ -51,48 +50,18 @@ int main()
             std::make_unique<DocuTrace::Controllers::UploadController>(search_service);
         upload_controller->RegisterRoutes(app);
 
-        // Ruta adicional de salud para la API
-        CROW_ROUTE(app, "/api/health")
-            .methods("GET"_method)(
-                [](const crow::request& req)
-                {
-                    crow::json::wvalue response;
-                    response["status"] = "healthy";
-                    response["service"] = "DocuTrace Search API";
-                    response["version"] = "2.0.0";
-                    response["timestamp"] = std::time(nullptr);
-
-                    return crow::response(200, response);
-                });
-
-        /*
-        // Cargar datos de prueba si existen
-        std::string data_file =
-            DocuTrace::Shared::EnvUtils::GetEnv("DATA_FILE", "../../data/docs/sample.txt");
-        try
-        {
-            size_t loaded = search_service->LoadDocumentsFromFile(data_file);
-            std::cout << "📚 Cargados " << loaded << " documentos de prueba" << std::endl;
-        }
-        catch (const std::exception& e)
-        {
-            std::cout << "⚠️  No se pudieron cargar datos de prueba desde " << data_file << ": "
-                      << e.what() << std::endl;
-            std::cout << "📝 Puedes indexar documentos usando POST /api/upload" << std::endl;
-        }
-        */
-
-        std::cout << "🚀 DocuTrace Search API iniciado en puerto " << PORT << std::endl;
-        std::cout << "📍 Health check: http://localhost:" << PORT << "/health" << std::endl;
-        std::cout << "🔍 API Info: http://localhost:" << PORT << "/api/info" << std::endl;
-        std::cout << "📊 Stats: http://localhost:" << PORT << "/api/stats" << std::endl;
-        std::cout << "🔎 Documentos indexados: " << search_service->GetDocumentCount() << std::endl;
+        std::cout << "[+] DocuTrace Search API iniciado en puerto " << PORT << std::endl;
+        std::cout << "[+] Health check: http://localhost:" << PORT << "/health" << std::endl;
+        std::cout << "[+] API Info: http://localhost:" << PORT << "/api/info" << std::endl;
+        std::cout << "[+] Stats: http://localhost:" << PORT << "/api/stats" << std::endl;
+        std::cout << "[+] Documentos indexados: " << search_service->GetDocumentCount()
+                  << std::endl;
 
         app.port(PORT).concurrency(std::thread::hardware_concurrency()).run();
     }
     catch (const std::exception& e)
     {
-        std::cerr << "❌ Error fatal: " << e.what() << std::endl;
+        std::cerr << "[-] Error fatal: " << e.what() << std::endl;
         return 1;
     }
 
