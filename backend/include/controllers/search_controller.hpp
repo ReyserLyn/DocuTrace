@@ -2,6 +2,7 @@
 
 #include <memory>
 #include "crow/app.h"
+#include "crow/middlewares/cors.h"
 #include "services/search_service.hpp"
 
 namespace DocuTrace::Controllers
@@ -22,7 +23,7 @@ namespace DocuTrace::Controllers
         SearchController& operator=(SearchController&&) = default;
 
         // Registrar todas las rutas en la app de Crow
-        void RegisterRoutes(crow::SimpleApp& app);
+        void RegisterRoutes(crow::App<crow::CORSHandler>& app);
     };
 
 } // namespace DocuTrace::Controllers

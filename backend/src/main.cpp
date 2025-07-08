@@ -5,22 +5,9 @@
 #include "controllers/search_controller.hpp"
 #include "controllers/upload_controller.hpp"
 #include "crow/app.h"
+#include "crow/middlewares/cors.h"
 #include "services/search_service.hpp"
 #include "shared/env_utils.hpp"
-
-void setupCORS(crow::SimpleApp& app)
-{
-    // Configurar CORS para todas las rutas (TODO: Configurar CORS para rutas específicas)
-    CROW_ROUTE(app, "/").methods("OPTIONS"_method)(
-        [](const crow::request& req)
-        {
-            crow::response res(200);
-            res.add_header("Access-Control-Allow-Origin", "*");
-            res.add_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            res.add_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            return res;
-        });
-}
 
 int main()
 {
@@ -30,10 +17,14 @@ int main()
 
         const auto PORT = std::stoi(DocuTrace::Shared::EnvUtils::GetEnv("PORT", "8000"));
 
-        crow::SimpleApp app;
+        crow::App<crow::CORSHandler> app;
 
-        // Configurar CORS
-        setupCORS(app);
+        // Configurar CORS para permitir peticiones del frontend de Tauri
+        auto& cors = app.get_middleware<crow::CORSHandler>();
+        cors.global()
+            .origin("http://localhost:1420")
+            .methods("GET"_method, "POST"_method, "OPTIONS"_method)
+            .headers("Content-Type", "Authorization");
 
         // Registrar rutas de salud
         auto health_controller = std::make_unique<DocuTrace::Controllers::HealthController>();

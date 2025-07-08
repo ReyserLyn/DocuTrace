@@ -1,6 +1,7 @@
 #pragma once
 
 #include "crow/app.h"
+#include "crow/middlewares/cors.h"
 
 namespace DocuTrace::Controllers
 {
@@ -20,7 +21,7 @@ namespace DocuTrace::Controllers
          * @brief Registra todas las rutas de salud en la aplicación
          * @param app Aplicación Crow donde registrar las rutas
          */
-        static void RegisterRoutes(crow::SimpleApp& app);
+        void RegisterRoutes(crow::App<crow::CORSHandler>& app);
 
         /**
          * @brief Handler para endpoint básico de salud

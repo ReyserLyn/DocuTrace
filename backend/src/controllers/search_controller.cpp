@@ -9,7 +9,7 @@ namespace DocuTrace::Controllers
     {
     }
 
-    void SearchController::RegisterRoutes(crow::SimpleApp& app)
+    void SearchController::RegisterRoutes(crow::App<crow::CORSHandler>& app)
     {
         CROW_ROUTE(app, "/api/search")
             .methods("GET"_method)(
@@ -73,7 +73,7 @@ namespace DocuTrace::Controllers
                     info["name"] = "DocuTrace Search API";
                     info["version"] = "2.0.0";
                     info["description"] = "Motor de búsqueda BM25 con API REST";
-                    info["endpoints"]["health"] = "GET /health, GET /api/health";
+                    info["endpoints"]["health"] = "GET /health, GET /health";
                     info["endpoints"]["search"] = "GET /api/search?query={terminos}";
                     info["endpoints"]["upload"] = "POST /api/upload/{filename}";
 
