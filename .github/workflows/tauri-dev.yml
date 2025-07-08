@@ -60,6 +60,13 @@ jobs:
             cmake \
             g++
 
+      - name: Setup vcpkg (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/vcpkg install crow:x64-linux openssl:x64-linux zlib:x64-linux nlohmann-json:x64-linux
+
       - name: Setup vcpkg (Windows)
         if: matrix.platform == 'windows-latest'
         run: |
@@ -73,7 +80,7 @@ jobs:
           cd backend
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
           make -j$(nproc)
           cp bin/docutrace-backend ../../apps/tauri/src-tauri/binaries/docutrace-backend-x86_64-unknown-linux-gnu
 
