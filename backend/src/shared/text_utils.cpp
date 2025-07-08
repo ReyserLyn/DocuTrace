@@ -121,7 +121,9 @@ namespace DocuTrace::Shared
         normalized = cleanString(normalized);
 
         // 4. Tokenizar por espacios
-        return splitString(normalized, ' ');
+        auto tokens = splitString(normalized, ' ');
+
+        return tokens;
     }
 
 } // namespace DocuTrace::Shared
