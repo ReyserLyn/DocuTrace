@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
@@ -12,6 +13,11 @@ namespace DocuTrace::Services
     {
       private:
         std::unique_ptr<Infrastructure::BM25Engine> engine_;
+
+        /**
+         * @brief Carga documentos existentes desde el índice al inicializar
+         */
+        void LoadExistingDocuments();
 
       public:
         SearchService();

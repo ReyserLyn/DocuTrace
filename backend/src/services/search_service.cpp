@@ -1,12 +1,132 @@
 #include "services/search_service.hpp"
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
+#include <sstream>
 #include <thread>
 
 namespace DocuTrace::Services
 {
+    // Función helper para obtener el directorio de datos del sistema
+    std::filesystem::path get_system_data_dir()
+    {
+        std::filesystem::path data_dir;
+
+#ifdef _WIN32
+        // Windows: %APPDATA%\DocuTrace
+        const char* appdata = std::getenv("APPDATA");
+        if (appdata)
+        {
+            data_dir = std::filesystem::path(appdata) / "DocuTrace";
+        }
+        else
+        {
+            const char* userprofile = std::getenv("USERPROFILE");
+            if (userprofile)
+            {
+                data_dir = std::filesystem::path(userprofile) / "AppData" / "Roaming" / "DocuTrace";
+            }
+            else
+            {
+                data_dir = std::filesystem::current_path() / "data";
+            }
+        }
+#elif __APPLE__
+        // macOS: ~/Library/Application Support/DocuTrace
+        const char* home = std::getenv("HOME");
+        if (home)
+        {
+            data_dir =
+                std::filesystem::path(home) / "Library" / "Application Support" / "DocuTrace";
+        }
+        else
+        {
+            data_dir = std::filesystem::current_path() / "data";
+        }
+#else
+        // Linux: ~/.local/share/DocuTrace
+        const char* home = std::getenv("HOME");
+        if (home)
+        {
+            data_dir = std::filesystem::path(home) / ".local" / "share" / "DocuTrace";
+        }
+        else
+        {
+            data_dir = std::filesystem::current_path() / "data";
+        }
+#endif
+
+        return data_dir;
+    }
+
     SearchService::SearchService() : engine_(std::make_unique<Infrastructure::BM25Engine>())
     {
+        // Cargar documentos existentes al inicializar
+        LoadExistingDocuments();
+    }
+
+    void SearchService::LoadExistingDocuments()
+    {
+        try
+        {
+            auto data_dir = get_system_data_dir();
+            auto index_file = data_dir / "document_index.json";
+
+            if (!std::filesystem::exists(index_file))
+            {
+                return;
+            }
+
+            std::ifstream file(index_file);
+            if (!file.is_open())
+            {
+                return;
+            }
+
+            nlohmann::json index;
+            file >> index;
+
+            if (!index.is_array())
+            {
+                return;
+            }
+
+            size_t loaded_count = 0;
+            for (const auto& doc : index)
+            {
+                if (doc.contains("id") && doc.contains("path"))
+                {
+                    try
+                    {
+                        std::string file_path = doc["path"];
+
+                        // Leer contenido del archivo
+                        std::ifstream doc_file(file_path);
+                        if (doc_file.is_open())
+                        {
+                            std::stringstream buffer;
+                            buffer << doc_file.rdbuf();
+                            std::string content = buffer.str();
+
+                            if (!content.empty())
+                            {
+                                engine_->IndexDocument(static_cast<size_t>(loaded_count), content);
+                                loaded_count++;
+                            }
+                        }
+                    }
+                    catch (const std::exception& e)
+                    {
+                        std::cerr << "[-] Error al procesar documento: " << e.what() << std::endl;
+                    }
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "[-] Error al cargar documentos existentes: " << e.what() << std::endl;
+        }
     }
 
     std::vector<Models::SearchResult> SearchService::Search(
