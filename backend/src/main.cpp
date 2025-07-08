@@ -44,7 +44,6 @@ int main()
         std::cout << "[+] DocuTrace Search API iniciado en puerto " << PORT << std::endl;
         std::cout << "[+] Health check: http://localhost:" << PORT << "/health" << std::endl;
         std::cout << "[+] API Info: http://localhost:" << PORT << "/api/info" << std::endl;
-        std::cout << "[+] Stats: http://localhost:" << PORT << "/api/stats" << std::endl;
         std::cout << "[+] Documentos indexados: " << search_service->GetDocumentCount()
                   << std::endl;
 
