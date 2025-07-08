@@ -4,9 +4,18 @@ bin/
 out/
 lib/
 
-CMakeSettings.json
-vcpkg-configuration.json
+data/docs/*
 
+data/last_id.txt
+
+*.o
+*.exe
+*.out
+*.log
+
+CMakeSettings.json
+
+vcpkg-configuration.json
 vcpkg_installed
 
 .env
