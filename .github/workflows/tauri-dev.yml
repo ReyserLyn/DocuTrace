@@ -105,7 +105,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd apps/tauri
-          cargo tauri build
+          cargo tauri build -- --release
 
       - name: Upload artifact (Linux)
         if: matrix.platform == 'ubuntu-22.04'
