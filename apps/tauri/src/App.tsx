@@ -89,22 +89,6 @@ function App() {
 
       {/* Contenido principal */}
       <main className="min-h-[calc(100vh-80px)]">{renderView()}</main>
-
-      {/* Footer opcional */}
-      <footer className="border-t bg-card/30 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <p>© 2024 DocuTrace - Motor de búsqueda BM25</p>
-            <div className="flex items-center gap-4">
-              <span>v1.0.0</span>
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Activo</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
