@@ -43,7 +43,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Create environment file
+      - name: Create environment file (Windows)
+        if: matrix.platform == 'windows-latest'
+        working-directory: ./apps/tauri
+        run: |
+          @"
+          # Variables de entorno para build de producción
+          VITE_BACKEND_URL=${{ secrets.BACKEND_URL_PROD || 'https://docutrace.reyserlyn.com' }}
+          TAURI_BACKEND_URL=${{ secrets.BACKEND_URL_PROD || 'https://docutrace.reyserlyn.com' }}
+          VITE_ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD || 'admin123456' }}
+          VITE_DEV_MODE=false
+          "@ | Out-File -FilePath .env -Encoding utf8
+
+      - name: Create environment file (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
         working-directory: ./apps/tauri
         run: |
           cat > .env << EOF
@@ -70,8 +83,15 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-      - name: Clean up environment file
-        if: always()
+      - name: Clean up environment file (Windows)
+        if: always() && matrix.platform == 'windows-latest'
+        working-directory: ./apps/tauri
+        run: |
+          if (Test-Path .env) { Remove-Item .env -Force }
+          Write-Host "Environment file cleaned up"
+
+      - name: Clean up environment file (Linux)
+        if: always() && matrix.platform == 'ubuntu-22.04'
         working-directory: ./apps/tauri
         run: |
           rm -f .env
