@@ -9,6 +9,18 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const SUPPORTED_EXTENSIONS = ".txt,.pdf,.doc,.docx,.md";
 const MAX_FILES = 100;
 
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 B";
+
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  } else if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  } else {
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+};
+
 interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
   className?: string;
@@ -265,7 +277,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                     <FileText className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">{file.name}</span>
                     <span className="text-xs text-muted-foreground flex-shrink-0">
-                      ({(file.size / 1024 / 1024).toFixed(1)}MB)
+                      ({formatFileSize(file.size)})
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
