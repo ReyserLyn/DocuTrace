@@ -2,14 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 #[tauri::command]
-async fn check_backend_status(app: tauri::AppHandle) -> Result<String, String> {
-    let client = app.reqwest_client();
-    
+async fn check_backend_status() -> Result<String, String> {
     let backend_url = option_env!("TAURI_BACKEND_URL")
         .unwrap_or("http://localhost:8000");
     let health_url = format!("{}/health", backend_url);
     
-    match client.get(&health_url).send().await {
+    match reqwest::get(&health_url).await {
         Ok(response) => {
             if response.status().is_success() {
                 Ok("Backend conectado".to_string())
