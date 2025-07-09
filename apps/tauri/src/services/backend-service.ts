@@ -1,5 +1,4 @@
 import { SearchResponse, UploadError, UploadResponse } from "@/interfaces";
-import { invoke } from "@tauri-apps/api/core";
 
 class BackendService {
   private baseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
@@ -24,7 +23,10 @@ class BackendService {
   // Verificar estado del backend usando comando de Tauri
   async checkBackendStatus(): Promise<boolean> {
     try {
-      await invoke("check_backend_status");
+      const response = await fetch(`${this.baseUrl}/health`);
+      if (!response.ok) {
+        throw new Error("Backend no está respondiendo");
+      }
       return true;
     } catch (error) {
       console.error("Backend status check failed:", error);
