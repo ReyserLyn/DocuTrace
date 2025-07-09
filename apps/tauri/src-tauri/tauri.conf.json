@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "DocuTrace - Motor de Búsqueda BM25",
+        "title": "DocuTrace",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
@@ -24,9 +24,6 @@
     }
   },
   "bundle": {
-    "externalBin": [
-      "binaries/docutrace-backend"
-    ],
     "active": true,
     "targets": "all",
     "icon": [

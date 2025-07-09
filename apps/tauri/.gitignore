@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment files - NUNCA SUBIR CREDENCIALES
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Mantener solo .env.example para referencia
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
