@@ -21,6 +21,129 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Función para crear fragmento de texto con contexto alrededor de las palabras encontradas
+const createSnippet = (
+  text: string,
+  searchTerms: string[],
+  maxLength: number = 180
+): string => {
+  if (!text || searchTerms.length === 0) {
+    return (
+      text.substring(0, maxLength) + (text.length > maxLength ? "..." : "")
+    );
+  }
+
+  // Limpiar y preparar términos de búsqueda
+  const cleanTerms = searchTerms
+    .map((term) => term.toLowerCase().trim())
+    .filter((term) => term.length > 0);
+
+  if (cleanTerms.length === 0) {
+    return (
+      text.substring(0, maxLength) + (text.length > maxLength ? "..." : "")
+    );
+  }
+
+  // Buscar la primera ocurrencia de cualquier término
+  let earliestIndex = -1;
+  const textLower = text.toLowerCase();
+
+  for (const term of cleanTerms) {
+    const index = textLower.indexOf(term);
+    if (index !== -1 && (earliestIndex === -1 || index < earliestIndex)) {
+      earliestIndex = index;
+    }
+  }
+
+  if (earliestIndex === -1) {
+    // No se encontró ningún término, devolver el inicio
+    return (
+      text.substring(0, maxLength) + (text.length > maxLength ? "..." : "")
+    );
+  }
+
+  // Calcular inicio del fragmento con contexto
+  const contextBefore = 60; // caracteres de contexto antes
+  const start = Math.max(0, earliestIndex - contextBefore);
+
+  // Ajustar inicio para no cortar palabras
+  let adjustedStart = start;
+  if (start > 0) {
+    const spaceIndex = text.indexOf(" ", start);
+    if (spaceIndex !== -1 && spaceIndex - start < 20) {
+      adjustedStart = spaceIndex + 1;
+    }
+  }
+
+  // Extraer fragmento
+  let snippet = text.substring(adjustedStart, adjustedStart + maxLength);
+
+  // Ajustar final para no cortar palabras
+  if (adjustedStart + maxLength < text.length) {
+    const lastSpace = snippet.lastIndexOf(" ");
+    if (lastSpace > maxLength * 0.7) {
+      snippet = snippet.substring(0, lastSpace);
+    }
+    snippet += "...";
+  }
+
+  // Agregar "..." al inicio si no empezamos desde el principio
+  if (adjustedStart > 0) {
+    snippet = "..." + snippet;
+  }
+
+  return snippet;
+};
+
+// Función para resaltar términos de búsqueda en el texto
+const highlightSearchTerms = (
+  text: string,
+  searchQuery: string
+): React.ReactNode => {
+  if (!text || !searchQuery.trim()) {
+    return text;
+  }
+
+  // Extraer términos individuales de la consulta
+  const terms = searchQuery
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((term) => term.length > 0);
+
+  if (terms.length === 0) {
+    return text;
+  }
+
+  // Crear patrón regex para todos los términos
+  const pattern = terms
+    .map(
+      (term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") // escapar caracteres especiales
+    )
+    .join("|");
+
+  const regex = new RegExp(`(${pattern})`, "gi");
+
+  // Dividir texto y resaltar coincidencias
+  const parts = text.split(regex);
+
+  return parts.map((part, index) => {
+    const isMatch = terms.some(
+      (term) => part.toLowerCase() === term.toLowerCase()
+    );
+
+    return isMatch ? (
+      <strong
+        key={index}
+        className="font-bold text-blue-700 bg-yellow-100 px-0.5 rounded"
+      >
+        {part}
+      </strong>
+    ) : (
+      part
+    );
+  });
+};
+
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -219,59 +342,77 @@ export function Home() {
                   </div>
 
                   <div className="space-y-6">
-                    {searchResults.map((result: SearchResult) => (
-                      <div
-                        key={result.document_id}
-                        className="group border-b last:border-b-0 border-muted py-6 px-2 hover:bg-muted/50 transition cursor-pointer rounded-lg"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                            Documento #{result.document_id}
-                          </span>
-                          {/* Aquí se puede agregar un badge de tipo de archivo en el futuro */}
+                    {searchResults.map((result: SearchResult) => {
+                      // Preparar términos de búsqueda para el fragmento
+                      const searchTerms = searchQuery
+                        .toLowerCase()
+                        .split(/\s+/)
+                        .filter((term) => term.length > 0);
+
+                      // Crear fragmento contextual
+                      const snippet = createSnippet(
+                        result.content_preview,
+                        searchTerms,
+                        200
+                      );
+
+                      return (
+                        <div
+                          key={result.document_id}
+                          className="group border-b last:border-b-0 border-muted py-6 px-2 hover:bg-muted/50 transition cursor-pointer rounded-lg"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                              Documento #{result.document_id}
+                            </span>
+                            {/* Aquí se puede agregar un badge de tipo de archivo en el futuro */}
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm text-muted-foreground">
+                              {(result.score * 100).toFixed(1)}% relevancia
+                            </span>
+                          </div>
+                          <div className="mb-2">
+                            <span className="text-lg font-semibold text-blue-800 group-hover:underline">
+                              {/* Aquí se puede mostrar un título si el backend lo provee */}
+                              Documento #{result.document_id}
+                            </span>
+                          </div>
+                          <div className="text-foreground leading-relaxed mb-3 text-base">
+                            {highlightSearchTerms(snippet, searchQuery)}
+                          </div>
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  Ver completo
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl">
+                                <DialogTitle>{`Documento #${result.document_id}`}</DialogTitle>
+                                <div className="max-h-[60vh] overflow-y-auto whitespace-pre-line text-base mt-4">
+                                  {highlightSearchTerms(
+                                    result.content_preview,
+                                    searchQuery
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(
+                                  result.content_preview
+                                );
+                              }}
+                            >
+                              Copiar contenido
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm text-muted-foreground">
-                            {(result.score * 100).toFixed(1)}% relevancia
-                          </span>
-                        </div>
-                        <div className="mb-2">
-                          <span className="text-lg font-semibold text-blue-800 group-hover:underline">
-                            {/* Aquí se puede mostrar un título si el backend lo provee */}
-                            Documento #{result.document_id}
-                          </span>
-                        </div>
-                        <p className="text-foreground leading-relaxed mb-3 text-base">
-                          {result.content_preview}
-                        </p>
-                        <div className="flex gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                Ver completo
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogTitle>{`Documento #${result.document_id}`}</DialogTitle>
-                              <div className="max-h-[60vh] overflow-y-auto whitespace-pre-line text-base mt-4">
-                                {result.content_preview}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(
-                                result.content_preview
-                              );
-                            }}
-                          >
-                            Copiar contenido
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
