@@ -14,7 +14,7 @@ export const useAuthStore = create<AuthState>()(
     persist(
       (set, get) => ({
         isAuthenticated: false,
-        adminPassword: "admin",
+        adminPassword: import.meta.env.VITE_ADMIN_PASSWORD || "admin",
 
         authenticate: (password: string): boolean => {
           const { adminPassword } = get();
