@@ -34,17 +34,6 @@ target_compile_options(${PROJECT_NAME}
   $<$<CONFIG:MinSizeRel>:-Os>
 )
 
-# Copiar archivo .env al directorio de salida del ejecutable
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-  "${CMAKE_SOURCE_DIR}/.env"
-  "$<TARGET_FILE_DIR:${PROJECT_NAME}>/.env"
-  COMMENT "Copiando archivo .env al directorio del ejecutable"
-)
-
-# Mensaje útil al configurar
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
 # Cabeceras precompiladas
 target_precompile_headers(${PROJECT_NAME}
   PRIVATE
