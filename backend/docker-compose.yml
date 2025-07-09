@@ -2,9 +2,33 @@ services:
   docutrace-backend:
     build:
       context: .
+      args:
+        BUILD_TYPE: ${BUILD_TYPE:-Release}
+        PORT: ${PORT:-8000}
+    image: docutrace-backend:local
+    container_name: docutrace-backend
     restart: unless-stopped
     ports:
-      - "${PORT}:${PORT}"
+      - "${PORT:-8000}:${PORT:-8000}"
     environment:
-      - PORT=${PORT}
-      - BUILD_TYPE=${BUILD_TYPE}
+      - PORT=${PORT:-8000}
+      - BUILD_TYPE=${BUILD_TYPE:-Release}
+    volumes:
+      - docutrace-data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - docutrace-network
+
+volumes:
+  docutrace-data:
+    driver: local
+
+networks:
+  docutrace-network:
+    driver: bridge
